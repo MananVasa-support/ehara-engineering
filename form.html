@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- AUTH GUARD — keep at the very top of <head> -->
+<style id="auth-guard-hide">html { visibility: hidden; }</style>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="auth-config.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="api.js"></script>
+<script>window.Auth.guardPage({ redirectTo: 'index.html' });</script>
+<!-- END AUTH GUARD -->
+
+<base target="_top">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Ehara Engineering — Assign Work</title>
+<style>
+
+:root {
+  --blue:        #1A3CC8;
+  --blue-deep:   #0D028A;
+  --blue-soft:   #2E5BFF;
+  --red:         #C52330;
+  --red-soft:    #E53935;
+  --teal:        #00C2A8;
+  --ink:         #1a1d24;
+  --ink-soft:    #4a4f5a;
+  --paper:       #F0F9FB;
+  --card:        #ffffff;
+  --card-2:      #f8fafc;
+  --card-3:      #eef1f6;
+  --line:        #dde1ea;
+  --shadow-soft: 0 1px 2px rgba(15,20,30,.04), 0 4px 12px rgba(15,20,30,.06);
+  --shadow-lift: 0 4px 8px rgba(15,20,30,.06), 0 16px 32px rgba(15,20,30,.10);
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(20,30,50,0.06) 1px, transparent 0);
+  background-size: 22px 22px;
+  min-height: 100vh;
+}
+
+/* ============ HEADER ============ */
+.eh-header {
+  position: relative;
+  background: linear-gradient(120deg, #0a0e1a 0%, #1a1f2e 45%, #0d028a 100%);
+  padding: 22px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  overflow: hidden;
+  border-bottom: 2px solid var(--red);
+}
+.eh-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(60% 80% at 0% 100%, rgba(46,91,255,.18), transparent 60%),
+    radial-gradient(60% 80% at 100% 0%, rgba(229,57,53,.12), transparent 60%);
+  pointer-events: none;
+}
+.eh-header::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--red) 20%, var(--red-soft) 50%, var(--red) 80%, transparent 100%);
+  box-shadow: 0 0 18px rgba(229,57,53,.55), 0 0 36px rgba(229,57,53,.25);
+}
+#left-logo {
+  height: 70px; width: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.40));
+  position: relative; z-index: 2;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+#right-logo {
+  height: 56px; width: auto;
+  position: relative; z-index: 2;
+  mix-blend-mode: screen;
+  filter: brightness(1.1);
+}
+.eh-titles {
+  text-align: center; position: relative; z-index: 2;
+  padding: 0 8px;
+}
+.eh-titles h1 {
+  margin: 0;
+  font-size: 30px; font-weight: 900; letter-spacing: 0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.40);
+}
+.eh-titles .eh-subhead {
+  margin-top: 6px;
+  font-size: 14px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--red-soft);
+  text-shadow: 0 0 12px rgba(229,57,53,.45), 0 1px 0 rgba(0,0,0,.20);
+  text-transform: uppercase;
+}
+
+/* ============ NAV BAR ============ */
+.eh-nav-wrap {
+  background: #0a0e1a;
+  border-bottom: 1px solid #050811;
+}
+.eh-nav {
+  display: flex; gap: 10px; align-items: center;
+  padding: 12px 20px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-soft) #0a0e1a;
+}
+.eh-nav::-webkit-scrollbar { height: 6px; }
+.eh-nav::-webkit-scrollbar-track { background: #0a0e1a; }
+.eh-nav::-webkit-scrollbar-thumb { background: var(--blue-soft); border-radius: 3px; }
+.eh-nav-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,0.06);
+  color: #f0f1f5;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.eh-nav-btn:hover {
+  background: linear-gradient(120deg, rgba(46,91,255,.30), rgba(13,2,138,.30));
+  border-color: rgba(255,255,255,0.30);
+  transform: translateY(-1px);
+}
+.eh-nav-btn.primary {
+  background: linear-gradient(120deg, var(--blue-soft), var(--blue-deep));
+  border-color: transparent;
+}
+.eh-nav-btn.add {
+  background: rgba(229,57,53,.18);
+  border-color: rgba(229,57,53,.45);
+  color: #ffd2d2;
+  font-size: 18px; font-weight: 900;
+  padding: 6px 14px;
+}
+.eh-nav-btn.add:hover { background: rgba(229,57,53,.30); }
+
+/* ============ BOTTOM SIGN-OUT ============ */
+.eh-signout-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 48px auto 24px;
+  padding: 0 18px;
+}
+.eh-signout-btn {
+  padding: 11px 32px;
+  background: #fff;
+  color: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .18s ease;
+  box-shadow: var(--shadow-soft);
+}
+.eh-signout-btn:hover {
+  background: var(--red);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(197,35,48,0.30);
+}
+.eh-signout-btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* ============ FOOTER ============ */
+.eh-footer {
+  margin-top: 56px;
+  padding: 18px 24px;
+  background: #0a0e1a;
+  color: #cfd2d8;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.7;
+  border-top: 1px solid #050811;
+}
+.eh-footer a { color: #cfd2d8; text-decoration: underline; }
+.eh-footer .altus { color: var(--red-soft); font-weight: 900; letter-spacing: 0.5px; }
+.eh-footer .copy { color: #888c95; font-size: 11px; margin-top: 4px; }
+
+/* ============ MODAL (nav button add) ============ */
+.eh-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(10,15,25,.55);
+  display: none; align-items: center; justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+.eh-modal-backdrop.show { display: flex; animation: ehFade .18s ease; }
+.eh-modal {
+  background: #fff; border-radius: 14px; padding: 24px;
+  width: min(420px, 92vw);
+  box-shadow: var(--shadow-lift);
+  border-top: 4px solid;
+  border-image: linear-gradient(120deg, var(--blue-soft), var(--blue-deep)) 1;
+}
+.eh-modal h3 { margin: 0 0 14px 0; font-size: 18px; }
+.eh-modal label { display:block; font-size:12px; font-weight:700; margin: 10px 0 6px; color: var(--ink-soft); letter-spacing:.3px; text-transform:uppercase; }
+.eh-modal input {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--line);
+  border-radius: 8px; font-family: inherit; font-size: 14px;
+}
+.eh-modal input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,91,255,.18); }
+.eh-modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top: 18px; }
+.eh-btn-secondary { padding: 9px 18px; border-radius:8px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-weight:700; }
+.eh-btn-primary {
+  padding: 9px 18px; border-radius: 8px; border: none;
+  background: linear-gradient(120deg, var(--blue-soft), var(--blue-deep));
+  color: #fff; font-weight: 800; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13,2,138,.30);
+}
+.eh-btn-primary:hover { box-shadow: 0 6px 22px rgba(13,2,138,.45); }
+
+/* ============ RESPONSIVE HEADER ============ */
+@media (max-width: 720px) {
+  .eh-header { grid-template-columns: auto 1fr auto; padding: 16px 14px; gap: 12px; }
+  #left-logo  { height: 44px; width: 44px; }
+  #right-logo { height: 36px; }
+  .eh-titles h1 { font-size: 18px; }
+  .eh-titles .eh-subhead { font-size: 11px; letter-spacing: 0.8px; }
+}
+
+@keyframes ehFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============ FORM PAGE ============ */
+.form-shell {
+  max-width: 880px;
+  margin: 32px auto;
+  padding: 0 18px;
+}
+.form-title {
+  font-size: 32px; font-weight: 900;
+  margin: 8px 0 6px;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+.form-title .accent {
+  background: linear-gradient(120deg, var(--blue-soft), var(--blue-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.form-sub {
+  color: var(--ink-soft); font-size: 14px; margin-bottom: 26px;
+}
+.q-card {
+  position: relative;
+  background: linear-gradient(160deg, var(--card-2), var(--card-3));
+  border-radius: 16px;
+  padding: 22px 22px 22px 26px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-soft);
+  transition: transform .15s ease, box-shadow .25s ease, border-color .25s ease;
+  border-top: 3px solid transparent;
+  opacity: 0; transform: translateY(8px);
+  animation: qFadeIn .55s cubic-bezier(.2,.7,.2,1) forwards;
+  overflow: hidden;
+}
+.q-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, var(--blue-soft), transparent 80%);
+  opacity: 0.85;
+}
+.q-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-top-color: var(--blue-soft);
+}
+.q-head {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 14px;
+}
+.q-badge {
+  display: inline-grid; place-items: center;
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--blue-soft), var(--blue-deep));
+  color: #fff; font-weight: 900; font-size: 14px;
+  border-radius: 9px;
+  box-shadow: 0 4px 10px rgba(13,2,138,.30);
+}
+.q-label {
+  font-size: 15px; font-weight: 700; line-height: 1.45;
+  color: var(--ink);
+}
+.q-label .req { color: var(--red); margin-left: 4px; }
+.q-hint { font-size: 12px; color: var(--ink-soft); margin-top: 3px; font-weight: 400; }
+
+/* Inputs */
+.q-card input[type="text"],
+.q-card input[type="date"],
+.q-card textarea,
+.q-card select {
+  width: 100%;
+  padding: 11px 14px;
+  font-family: inherit; font-size: 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.q-card input:focus,
+.q-card textarea:focus,
+.q-card select:focus {
+  outline: none;
+  border-color: var(--blue-soft);
+  box-shadow: 0 0 0 4px rgba(46,91,255,.16);
+}
+.q-card textarea { resize: vertical; min-height: 92px; }
+
+.q-card.error input,
+.q-card.error textarea,
+.q-card.error select,
+.q-card.error .ms-trigger,
+.q-card.error .radio-row { border-color: var(--red) !important; box-shadow: 0 0 0 4px rgba(204,34,41,.10); }
+.q-card.error { animation: shakeX .4s ease; }
+
+/* Radio group */
+.radio-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 6px; border: 1.5px solid transparent; border-radius: 10px;
+}
+.radio-opt {
+  flex: 1 1 180px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13.5px; font-weight: 600;
+  transition: all .15s;
+  user-select: none;
+}
+.radio-opt:hover { border-color: var(--blue-soft); transform: translateY(-1px); }
+.radio-opt input { accent-color: var(--blue-soft); width: 16px; height: 16px; }
+.radio-opt.checked {
+  border-color: var(--blue-soft);
+  background: linear-gradient(120deg, rgba(46,91,255,.10), rgba(13,2,138,.10));
+}
+.radio-opt[data-prio="1"].checked { border-color: var(--red); background: linear-gradient(120deg, rgba(197,35,48,.10), rgba(229,57,53,.08)); }
+.radio-opt[data-prio="1"].checked input { accent-color: var(--red); }
+
+/* Multi-select dropdown trigger */
+.ms-trigger {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 14px;
+  font-family: inherit; font-size: 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  position: relative;
+  transition: border-color .15s, box-shadow .15s;
+}
+.ms-trigger:hover { border-color: #c7cad2; }
+.ms-trigger.open { border-color: var(--blue-soft); box-shadow: 0 0 0 4px rgba(46,91,255,.16); }
+.ms-placeholder { color: #9aa0ad; font-size: 13.5px; }
+.ms-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px 4px 10px;
+  background: linear-gradient(120deg, rgba(46,91,255,.15), rgba(13,2,138,.15));
+  border: 1px solid rgba(13,2,138,.25);
+  border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink);
+}
+.ms-chip .x {
+  display: inline-grid; place-items: center;
+  width: 16px; height: 16px;
+  background: rgba(0,0,0,.10); border-radius: 50%;
+  font-size: 11px; line-height: 1; cursor: pointer; font-weight: 800;
+}
+.ms-chip .x:hover { background: var(--red); color: #fff; }
+.ms-caret {
+  margin-left: auto; color: var(--ink-soft); font-size: 11px; flex-shrink: 0;
+  transition: transform .2s;
+}
+.ms-trigger.open .ms-caret { transform: rotate(180deg); }
+
+/* Body-appended dropdown panel */
+.ms-panel {
+  position: fixed;
+  z-index: 9999;
+  background: #fff;
+  border: 1.5px solid var(--blue-soft);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(15,20,30,.18);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-soft) #f0f1f5;
+}
+.ms-panel::-webkit-scrollbar { width: 6px; }
+.ms-panel::-webkit-scrollbar-thumb { background: var(--blue-soft); border-radius: 3px; }
+.ms-panel::-webkit-scrollbar-track { background: #f0f1f5; }
+.ms-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13.5px;
+}
+.ms-opt:hover { background: rgba(46,91,255,.08); }
+.ms-opt input { accent-color: var(--blue-soft); width: 16px; height: 16px; }
+.ms-opt.pinned { font-weight: 800; background: rgba(13,2,138,.06); }
+.ms-opt.all { font-weight: 800; border-bottom: 1px dashed var(--line); margin-bottom: 4px; padding-bottom: 11px; }
+
+/* Attachment card */
+.att-zone {
+  border: 2px dashed #c7cad2;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s;
+}
+.att-zone:hover, .att-zone.dragover {
+  border-color: var(--blue-soft);
+  background: rgba(46,91,255,.04);
+}
+.att-zone .att-icon { font-size: 24px; }
+.att-zone .att-text { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+.att-zone .att-text b { color: var(--ink); }
+.att-or {
+  text-align: center;
+  font-size: 11.5px; color: #9aa0ad;
+  margin: 10px 0; letter-spacing: 1px;
+}
+.att-or::before, .att-or::after {
+  content: ''; display: inline-block; width: 60px; height: 1px;
+  background: var(--line); vertical-align: middle; margin: 0 8px;
+}
+.att-link-row { display: flex; gap: 8px; }
+.att-link-row input { flex: 1; }
+.att-link-row .btn-add-link {
+  padding: 0 16px; border: 1.5px solid var(--blue-deep);
+  background: #fff; color: var(--blue-deep); border-radius: 10px;
+  font-weight: 700; cursor: pointer; font-size: 13px;
+}
+.att-link-row .btn-add-link:hover { background: var(--blue-deep); color: #fff; }
+.att-preview {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(120deg, rgba(46,91,255,.08), rgba(13,2,138,.08));
+  border-radius: 10px;
+  font-size: 13px;
+  align-items: center;
+  gap: 10px;
+}
+.att-preview.show { display: flex; }
+.att-preview .att-name { flex: 1; word-break: break-all; font-weight: 600; }
+.att-preview .att-remove {
+  cursor: pointer; color: var(--red); font-weight: 900; padding: 4px 8px;
+  border-radius: 6px;
+}
+.att-preview .att-remove:hover { background: rgba(197,35,48,.10); }
+
+/* Submit */
+.submit-row {
+  display: flex; justify-content: center; margin: 28px 0 12px;
+}
+.btn-submit {
+  position: relative;
+  padding: 14px 42px;
+  font-size: 15px; font-weight: 900;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(120deg, var(--blue-soft), var(--blue-deep));
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(13,2,138,.30);
+  transition: transform .15s, box-shadow .25s;
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(13,2,138,.45), 0 0 0 6px rgba(46,91,255,.12);
+}
+.btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+/* Success screen */
+.success-screen {
+  display: none;
+  text-align: center;
+  padding: 60px 30px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow-lift);
+  border-top: 4px solid;
+  border-image: linear-gradient(120deg, var(--blue-soft), var(--blue-deep)) 1;
+  animation: qFadeIn .5s ease;
+}
+.success-screen.show { display: block; }
+.success-screen .check {
+  display: inline-grid; place-items: center;
+  width: 84px; height: 84px;
+  background: linear-gradient(135deg, var(--blue-soft), var(--blue-deep));
+  color: #fff; font-size: 42px; font-weight: 900;
+  border-radius: 50%;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(13,2,138,.30);
+  animation: popIn .55s cubic-bezier(.2,.7,.2,1);
+}
+.success-screen h2 { margin: 0 0 6px; font-size: 26px; }
+.success-screen p { color: var(--ink-soft); margin: 0 0 22px; }
+
+@keyframes qFadeIn { to { opacity: 1; transform: none; } }
+@keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes shakeX { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+@media (max-width: 600px) {
+  .form-title { font-size: 24px; }
+  .q-card { padding: 18px; }
+  .radio-opt { flex: 1 1 100%; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="eh-header">
+  <img id="left-logo" alt="Ehara Engineering" src="ehara_logo.jpg"/>
+  <div class="eh-titles">
+    <h1>Ehara Engineering</h1>
+    <div class="eh-subhead">Work Management System</div>
+  </div>
+  <img id="right-logo" alt="Altus Corp" src="altus_logo.png"/>
+</div>
+
+<div class="eh-nav-wrap">
+  <div class="eh-nav" id="ehNav">
+    <a class="eh-nav-btn primary" id="ehDashboardBtn" href="dashboard.html">
+      Dashboard
+    </a>
+    <a class="eh-nav-btn" href="https://docs.google.com/spreadsheets/d/1l2qHDPIzYQ0YPPaH1wBdefZNjHNdLSKv5rq7480MQuY/edit" target="_blank">
+      📋 View Sheet Data
+    </a>
+    <!-- dynamic buttons get injected here by JS -->
+    <button class="eh-nav-btn add" id="ehAddNav" title="Add nav button">+</button>
+  </div>
+</div>
+
+<div class="form-shell">
+  <div id="formView">
+    <div class="form-title">Assign <span class="accent">Work</span></div>
+    <div class="form-sub">Fill in the details below. Mandatory fields are marked with <span style="color:var(--red);font-weight:900">*</span>.</div>
+
+    <!-- Q1 Subject -->
+    <div class="q-card" data-q="subject" style="animation-delay:.04s">
+      <div class="q-head">
+        <div class="q-badge">1</div>
+        <div>
+          <div class="q-label">Subject of Work <span class="req">*</span></div>
+          <div class="q-hint">Pick the work category / department</div>
+        </div>
+      </div>
+      <select id="subject"><option value="">-- Select --</option></select>
+    </div>
+
+    <!-- Q2 Client -->
+    <div class="q-card" data-q="clientName" style="animation-delay:.08s">
+      <div class="q-head">
+        <div class="q-badge">2</div>
+        <div>
+          <div class="q-label">Client Name <span class="req">*</span></div>
+          <div class="q-hint">Who is the client for this task?</div>
+        </div>
+      </div>
+      <input type="text" id="clientName" placeholder="Type the client name"/>
+    </div>
+
+    <!-- Q3 Initiator -->
+    <div class="q-card" data-q="taskInitiator" style="animation-delay:.12s">
+      <div class="q-head">
+        <div class="q-badge">3</div>
+        <div>
+          <div class="q-label">Task Initiator <span class="req">*</span></div>
+          <div class="q-hint">Who is assigning this task?</div>
+        </div>
+      </div>
+      <select id="taskInitiator"><option value="">-- Select --</option></select>
+    </div>
+
+    <!-- Q4 Doer -->
+    <div class="q-card" data-q="taskDoer" style="animation-delay:.16s">
+      <div class="q-head">
+        <div class="q-badge">4</div>
+        <div>
+          <div class="q-label">Task Doer <span class="req">*</span></div>
+          <div class="q-hint">Pick one or more — select "All Employees" to assign to everyone</div>
+        </div>
+      </div>
+      <div class="ms-trigger" id="doerTrigger" tabindex="0">
+        <span class="ms-placeholder">-- Select employees --</span>
+        <span class="ms-caret">▼</span>
+      </div>
+    </div>
+
+    <!-- Q5 Task -->
+    <div class="q-card" data-q="task" style="animation-delay:.20s">
+      <div class="q-head">
+        <div class="q-badge">5</div>
+        <div>
+          <div class="q-label">Task <span class="req">*</span></div>
+          <div class="q-hint">Describe what needs to be done</div>
+        </div>
+      </div>
+      <textarea id="task" rows="4" placeholder="Describe the task in detail..."></textarea>
+    </div>
+
+    <!-- Q6 Priority -->
+    <div class="q-card" data-q="priority" style="animation-delay:.24s">
+      <div class="q-head">
+        <div class="q-badge">6</div>
+        <div>
+          <div class="q-label">Priority of Task <span class="req">*</span></div>
+          <div class="q-hint">How urgent is this?</div>
+        </div>
+      </div>
+      <div class="radio-row" id="priorityRow">
+        <label class="radio-opt" data-prio="1"><input type="radio" name="priority" value="1-Top Priority"/> 1 — Top Priority</label>
+        <label class="radio-opt" data-prio="2"><input type="radio" name="priority" value="2-Medium Priority"/> 2 — Medium Priority</label>
+        <label class="radio-opt" data-prio="3"><input type="radio" name="priority" value="3-Low Priority"/> 3 — Low Priority</label>
+      </div>
+    </div>
+
+    <!-- Q7 Due -->
+    <div class="q-card" data-q="dueDate" style="animation-delay:.28s">
+      <div class="q-head">
+        <div class="q-badge">7</div>
+        <div>
+          <div class="q-label">Due Date <span class="req">*</span></div>
+          <div class="q-hint">When should this be completed by?</div>
+        </div>
+      </div>
+      <input type="date" id="dueDate"/>
+    </div>
+
+    <!-- Q8 Notes -->
+    <div class="q-card" data-q="notes" style="animation-delay:.32s">
+      <div class="q-head">
+        <div class="q-badge">8</div>
+        <div>
+          <div class="q-label">Initiator Notes</div>
+          <div class="q-hint">Optional — any extra context for the task doer</div>
+        </div>
+      </div>
+      <textarea id="notes" rows="3" placeholder="Optional notes..."></textarea>
+    </div>
+
+    <!-- Q9 Attachment 1 -->
+    <div class="q-card" style="animation-delay:.36s">
+      <div class="q-head">
+        <div class="q-badge">9</div>
+        <div>
+          <div class="q-label">Attachment 1</div>
+          <div class="q-hint">Optional — upload a file or paste a link</div>
+        </div>
+      </div>
+      <div class="att-zone" data-att="1">
+        <input type="file" style="display:none" class="att-file-input"/>
+        <div class="att-icon">📎</div>
+        <div class="att-text"><b>Click to upload</b> or drag &amp; drop a file here</div>
+      </div>
+      <div class="att-or">OR PASTE A LINK</div>
+      <div class="att-link-row">
+        <input type="text" class="att-link-input" data-att="1" placeholder="https://drive.google.com/..."/>
+        <button type="button" class="btn-add-link" data-att="1">Add</button>
+      </div>
+      <div class="att-preview" data-att-preview="1">
+        <span class="att-icon">📄</span>
+        <span class="att-name"></span>
+        <span class="att-remove" data-att-remove="1">✕ Remove</span>
+      </div>
+    </div>
+
+    <!-- Q10 Attachment 2 -->
+    <div class="q-card" style="animation-delay:.40s">
+      <div class="q-head">
+        <div class="q-badge">10</div>
+        <div>
+          <div class="q-label">Attachment 2</div>
+          <div class="q-hint">Optional — second file or link</div>
+        </div>
+      </div>
+      <div class="att-zone" data-att="2">
+        <input type="file" style="display:none" class="att-file-input"/>
+        <div class="att-icon">📎</div>
+        <div class="att-text"><b>Click to upload</b> or drag &amp; drop a file here</div>
+      </div>
+      <div class="att-or">OR PASTE A LINK</div>
+      <div class="att-link-row">
+        <input type="text" class="att-link-input" data-att="2" placeholder="https://drive.google.com/..."/>
+        <button type="button" class="btn-add-link" data-att="2">Add</button>
+      </div>
+      <div class="att-preview" data-att-preview="2">
+        <span class="att-icon">📄</span>
+        <span class="att-name"></span>
+        <span class="att-remove" data-att-remove="2">✕ Remove</span>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button type="button" class="btn-submit" id="submitBtn">Submit</button>
+    </div>
+  </div>
+
+  <div class="success-screen" id="successView">
+    <div class="check">✓</div>
+    <h2>Submitted Successfully</h2>
+    <p>Your task has been assigned. The doer will see it on the dashboard.</p>
+    <button class="btn-submit" id="anotherBtn">Submit Another Response</button>
+  </div>
+</div>
+
+<div class="eh-signout-wrap">
+  <button class="eh-signout-btn" id="ehSignOutBtn" type="button" title="Sign out">Sign out</button>
+</div>
+
+<div class="eh-footer">
+  Powered By <span class="altus">Altus Corp</span> |
+  <a href="https://www.altuscorp.in" target="_blank">www.altuscorp.in</a> |
+  +91 80970 10410
+  <div class="copy">© Ehara Engineering 2025–2035 · All Rights Reserved</div>
+</div>
+
+<!-- Add Nav Button Modal -->
+<div class="eh-modal-backdrop" id="ehNavModal">
+  <div class="eh-modal">
+    <h3>Add Nav Button</h3>
+    <label for="nbName">Button Name</label>
+    <input type="text" id="nbName" placeholder="e.g. Reports Folder"/>
+    <label for="nbLink">Link (URL)</label>
+    <input type="text" id="nbLink" placeholder="https://..."/>
+    <div class="eh-modal-actions">
+      <button class="eh-btn-secondary" id="nbCancel">Cancel</button>
+      <button class="eh-btn-primary"   id="nbSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function ehRenderNav(buttons) {
+  var nav = document.getElementById('ehNav');
+  if (!nav) return;
+  Array.prototype.slice.call(nav.querySelectorAll('.eh-nav-btn.dyn')).forEach(function(el){ el.remove(); });
+  var addBtn = document.getElementById('ehAddNav');
+  (buttons || []).forEach(function(b){
+    var a = document.createElement('a');
+    a.className = 'eh-nav-btn dyn';
+    a.target = '_blank';
+    a.href = b.link;
+    a.textContent = b.name;
+    nav.insertBefore(a, addBtn);
+  });
+}
+
+function ehWireNavModal() {
+  var add = document.getElementById('ehAddNav');
+  var modal = document.getElementById('ehNavModal');
+  var cancel = document.getElementById('nbCancel');
+  var save = document.getElementById('nbSave');
+  var nameI = document.getElementById('nbName');
+  var linkI = document.getElementById('nbLink');
+  function open() { nameI.value=''; linkI.value=''; modal.classList.add('show'); setTimeout(function(){ nameI.focus(); }, 80); }
+  function close() { modal.classList.remove('show'); }
+  add.addEventListener('click', open);
+  cancel.addEventListener('click', close);
+  modal.addEventListener('click', function(e){ if (e.target === modal) close(); });
+  save.addEventListener('click', function(){
+    var name = (nameI.value || '').trim();
+    var link = (linkI.value || '').trim();
+    if (!name || !link) {
+      nameI.style.borderColor = name ? '' : '#CC2229';
+      linkI.style.borderColor = link ? '' : '#CC2229';
+      return;
+    }
+    save.disabled = true; save.textContent = 'Saving...';
+    callApi('addNavButton', { name: name, link: link })
+      .then(function (buttons) {
+        ehRenderNav(buttons);
+        save.disabled = false; save.textContent = 'Save';
+        close();
+      })
+      .catch(function (err) {
+        save.disabled = false; save.textContent = 'Save';
+        alert('Could not save: ' + (err && err.message ? err.message : err));
+      });
+  });
+}
+
+
+// ---- State ----
+var FORM = { employees: [], pinned: '', subjects: [], navButtons: [] };
+var doerSelection = [];
+var attachments = { 1: { mode:'none' }, 2: { mode:'none' } };
+
+function ehWireSignOut() {
+  var btn = document.getElementById('ehSignOutBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    window.Auth.signOut().finally(function () {
+      window.location.replace('index.html');
+    });
+  });
+}
+
+// ---- Init ----
+window.addEventListener('DOMContentLoaded', function(){
+  ehWireNavModal();
+  ehWireSignOut();
+  callApi('getFormData')
+    .then(function (d) {
+      FORM = d || FORM;
+      populateDropdowns();
+      ehRenderNav(FORM.navButtons);
+    })
+    .catch(function (err) {
+      alert('Could not load form data: ' + (err && err.message ? err.message : err));
+    });
+
+  document.getElementById('submitBtn').addEventListener('click', onSubmit);
+  document.getElementById('anotherBtn').addEventListener('click', function(){
+    location.reload();
+  });
+
+  var prow = document.getElementById('priorityRow');
+  prow.querySelectorAll('input[name="priority"]').forEach(function(r){
+    r.addEventListener('change', function(){
+      prow.querySelectorAll('.radio-opt').forEach(function(o){ o.classList.remove('checked'); });
+      r.closest('.radio-opt').classList.add('checked');
+    });
+  });
+
+  ['1','2'].forEach(setupAttachment);
+  setupDoerMS();
+});
+
+function populateDropdowns() {
+  var subj = document.getElementById('subject');
+  FORM.subjects.forEach(function(s){
+    var o = document.createElement('option'); o.value = s; o.textContent = s; subj.appendChild(o);
+  });
+
+  var ini = document.getElementById('taskInitiator');
+  FORM.employees.forEach(function(e){
+    var o = document.createElement('option'); o.value = e; o.textContent = e; ini.appendChild(o);
+  });
+  if (FORM.pinned) ini.value = FORM.pinned;
+}
+
+// ============ MULTI-SELECT (DOER) =============
+var msPanelEl = null;
+function setupDoerMS(){
+  var trigger = document.getElementById('doerTrigger');
+  trigger.addEventListener('click', function(e){
+    if (e.target.classList.contains('x')) return;
+    toggleMS();
+  });
+  trigger.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMS(); }
+  });
+  document.addEventListener('mousedown', function(e){
+    if (!msPanelEl) return;
+    if (msPanelEl.contains(e.target)) return;
+    if (trigger.contains(e.target)) return;
+    closeMS();
+  });
+  window.addEventListener('scroll', function(e){
+    if (msPanelEl && e.target === msPanelEl) return;
+    closeMS();
+  }, true);
+  window.addEventListener('resize', closeMS);
+}
+function toggleMS(){
+  if (msPanelEl) closeMS(); else openMS();
+}
+function openMS(){
+  var trigger = document.getElementById('doerTrigger');
+  trigger.classList.add('open');
+  msPanelEl = document.createElement('div');
+  msPanelEl.className = 'ms-panel';
+  var html = '';
+  html += '<div class="ms-opt all" data-ms-val="__ALL__"><input type="checkbox" id="msAll" '+ (isAllSelected()?'checked':'') +'/><span>All Employees</span></div>';
+  FORM.employees.forEach(function(name, idx){
+    var pinned = (idx === 0);
+    var checked = doerSelection.indexOf(name) !== -1;
+    html += '<div class="ms-opt'+(pinned?' pinned':'')+'" data-ms-val="'+escapeAttr(name)+'"><input type="checkbox" '+(checked?'checked':'')+'/><span>'+escapeHtml(name)+'</span></div>';
+  });
+  msPanelEl.innerHTML = html;
+  document.body.appendChild(msPanelEl);
+  positionMS();
+
+  msPanelEl.querySelectorAll('.ms-opt').forEach(function(opt){
+    opt.addEventListener('click', function(e){
+      var val = opt.getAttribute('data-ms-val');
+      var cb = opt.querySelector('input[type="checkbox"]');
+      if (e.target !== cb) cb.checked = !cb.checked;
+      if (val === '__ALL__') {
+        if (cb.checked) {
+          doerSelection = FORM.employees.slice();
+        } else {
+          doerSelection = [];
+        }
+      } else {
+        var i = doerSelection.indexOf(val);
+        if (cb.checked && i === -1) doerSelection.push(val);
+        if (!cb.checked && i !== -1) doerSelection.splice(i,1);
+      }
+      var allCb = msPanelEl.querySelector('#msAll');
+      if (allCb) allCb.checked = isAllSelected();
+      renderDoerChips();
+    });
+  });
+}
+function closeMS(){
+  if (msPanelEl && msPanelEl.parentNode) msPanelEl.parentNode.removeChild(msPanelEl);
+  msPanelEl = null;
+  var trigger = document.getElementById('doerTrigger');
+  if (trigger) trigger.classList.remove('open');
+}
+function positionMS(){
+  if (!msPanelEl) return;
+  var trigger = document.getElementById('doerTrigger');
+  var r = trigger.getBoundingClientRect();
+  msPanelEl.style.left  = r.left + 'px';
+  msPanelEl.style.top   = (r.bottom + 6) + 'px';
+  msPanelEl.style.width = r.width + 'px';
+  var ph = 320;
+  if (r.bottom + 6 + ph > window.innerHeight && r.top - 6 - ph > 0) {
+    msPanelEl.style.top = (r.top - 6 - ph) + 'px';
+  }
+}
+function isAllSelected(){
+  return FORM.employees.length > 0 && doerSelection.length === FORM.employees.length;
+}
+function renderDoerChips(){
+  var trigger = document.getElementById('doerTrigger');
+  Array.prototype.slice.call(trigger.children).forEach(function(c){
+    if (c.classList.contains('ms-caret')) return;
+    c.remove();
+  });
+  if (doerSelection.length === 0) {
+    var ph = document.createElement('span');
+    ph.className = 'ms-placeholder';
+    ph.textContent = '-- Select employees --';
+    trigger.insertBefore(ph, trigger.firstChild);
+    return;
+  }
+  if (isAllSelected()) {
+    var chip = document.createElement('span');
+    chip.className = 'ms-chip';
+    chip.innerHTML = '<span>All Employees ('+ doerSelection.length +')</span>';
+    trigger.insertBefore(chip, trigger.querySelector('.ms-caret'));
+    return;
+  }
+  var visible = doerSelection.slice(0, 3);
+  visible.forEach(function(name){
+    var chip = document.createElement('span');
+    chip.className = 'ms-chip';
+    chip.innerHTML = '<span>'+ escapeHtml(name) +'</span><span class="x" data-rm="'+ escapeAttr(name) +'">✕</span>';
+    chip.querySelector('.x').addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var i = doerSelection.indexOf(name);
+      if (i !== -1) doerSelection.splice(i,1);
+      renderDoerChips();
+      if (msPanelEl) {
+        var cb = msPanelEl.querySelector('[data-ms-val="'+ escapeAttr(name) +'"] input');
+        if (cb) cb.checked = false;
+        var allCb = msPanelEl.querySelector('#msAll');
+        if (allCb) allCb.checked = isAllSelected();
+      }
+    });
+    trigger.insertBefore(chip, trigger.querySelector('.ms-caret'));
+  });
+  if (doerSelection.length > 3) {
+    var more = document.createElement('span');
+    more.className = 'ms-chip';
+    more.style.background = 'linear-gradient(120deg, rgba(0,0,0,.08), rgba(0,0,0,.04))';
+    more.innerHTML = '<span>+'+ (doerSelection.length - 3) +' more</span>';
+    trigger.insertBefore(more, trigger.querySelector('.ms-caret'));
+  }
+}
+
+// ============ ATTACHMENTS =============
+function setupAttachment(n){
+  var zone = document.querySelector('.att-zone[data-att="'+n+'"]');
+  var fileInput = zone.querySelector('.att-file-input');
+  var linkInput = document.querySelector('.att-link-input[data-att="'+n+'"]');
+  var linkBtn   = document.querySelector('.btn-add-link[data-att="'+n+'"]');
+  var preview   = document.querySelector('.att-preview[data-att-preview="'+n+'"]');
+  var removeBtn = document.querySelector('.att-remove[data-att-remove="'+n+'"]');
+
+  zone.addEventListener('click', function(e){
+    if (e.target === fileInput) return;
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', function(){
+    if (fileInput.files && fileInput.files[0]) handleFile(n, fileInput.files[0]);
+  });
+  zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', function(){ zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', function(e){
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(n, e.dataTransfer.files[0]);
+  });
+  linkBtn.addEventListener('click', function(){
+    var url = (linkInput.value || '').trim();
+    if (!url) return;
+    attachments[n] = { mode:'link', link: url, name: url };
+    showPreview(n, '🔗', url);
+    linkInput.value = '';
+  });
+  linkInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); linkBtn.click(); }
+  });
+  removeBtn.addEventListener('click', function(){
+    attachments[n] = { mode:'none' };
+    preview.classList.remove('show');
+    fileInput.value = '';
+  });
+}
+function handleFile(n, file){
+  if (file.size > 25 * 1024 * 1024) {
+    alert('File too large. Max 25 MB.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(){
+    var dataUrl = reader.result;
+    var b64 = dataUrl.split(',')[1] || '';
+    attachments[n] = { mode:'file', name: file.name, mimeType: file.type || 'application/octet-stream', dataBase64: b64 };
+    showPreview(n, '📄', file.name + ' (' + formatBytes(file.size) + ')');
+  };
+  reader.readAsDataURL(file);
+}
+function showPreview(n, icon, label){
+  var p = document.querySelector('.att-preview[data-att-preview="'+n+'"]');
+  p.querySelector('.att-icon').textContent = icon;
+  p.querySelector('.att-name').textContent = label;
+  p.classList.add('show');
+}
+function formatBytes(b){
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(2) + ' MB';
+}
+
+// ============ SUBMIT =============
+function onSubmit(){
+  document.querySelectorAll('.q-card.error').forEach(function(c){ c.classList.remove('error'); });
+
+  var subject = document.getElementById('subject').value;
+  var clientName = document.getElementById('clientName').value.trim();
+  var taskInitiator = document.getElementById('taskInitiator').value;
+  var task = document.getElementById('task').value.trim();
+  var priorityEl = document.querySelector('input[name="priority"]:checked');
+  var priority = priorityEl ? priorityEl.value : '';
+  var dueDate = document.getElementById('dueDate').value;
+  var notes = document.getElementById('notes').value.trim();
+
+  var errors = [];
+  if (!subject) errors.push('subject');
+  if (!clientName) errors.push('clientName');
+  if (!taskInitiator) errors.push('taskInitiator');
+  if (doerSelection.length === 0) errors.push('taskDoer');
+  if (!task) errors.push('task');
+  if (!priority) errors.push('priority');
+  if (!dueDate) errors.push('dueDate');
+
+  if (errors.length) {
+    errors.forEach(function(q){
+      var c = document.querySelector('.q-card[data-q="'+q+'"]');
+      if (c) c.classList.add('error');
+    });
+    var first = document.querySelector('.q-card[data-q="'+errors[0]+'"]');
+    if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  var targets = doerSelection.slice();
+  var submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting (0/' + targets.length + ')...';
+
+  var done = 0, failed = 0;
+  function next(i){
+    if (i >= targets.length) {
+      if (failed === 0) {
+        document.getElementById('formView').style.display = 'none';
+        document.getElementById('successView').classList.add('show');
+        window.scrollTo({ top: 0, behavior:'smooth' });
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+        alert('Submitted ' + (targets.length - failed) + ' of ' + targets.length + ' (some failed).');
+      }
+      return;
+    }
+    var payload = {
+      subject: subject,
+      clientName: clientName,
+      taskInitiator: taskInitiator,
+      taskDoer: targets[i],
+      task: task,
+      priority: priority,
+      dueDate: dueDate,
+      notes: notes,
+      attachment1: attachments[1],
+      attachment2: attachments[2]
+    };
+    callApi('submitForm', payload)
+      .then(function () {
+        done++;
+        submitBtn.textContent = 'Submitting (' + done + '/' + targets.length + ')...';
+        next(i + 1);
+      })
+      .catch(function () {
+        failed++;
+        next(i + 1);
+      });
+  }
+  next(0);
+}
+
+// ============ utils =============
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+</script>
+</body>
+</html>

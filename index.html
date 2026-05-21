@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign in · Ehara Engineering Pvt. Ltd. WORKSPACE</title>
+
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #004a99; --red-dark: #002d5d; --red-bright: #3a7bd5;
+    --black: #1a1a1a; --black-deep: #0a0f1e; --maroon: #001433; --maroon-warm: #002050;
+    --cream: #f4f7f6; --white: #ffffff;
+    --text-dark: #111; --text-mid: #333; --text-muted: #777; --text-light: #aaa;
+    --border: rgba(0,0,0,0.1);
+  }
+
+  html { background: var(--cream); }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text-dark); -webkit-tap-highlight-color: transparent; min-height: 100vh; }
+
+  .login-page {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    min-height: 100vh;
+    background: var(--cream);
+  }
+
+  .lp-left {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--black-deep) 0%, var(--red-dark) 50%, var(--red) 100%);
+    padding: 72px 80px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: #fff;
+    animation: fadeIn .35s ease-out both;
+  }
+  .lp-left::before {
+    content: ''; position: absolute; top: -140px; right: -140px;
+    width: 440px; height: 440px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,74,153,0.35) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .lp-left::after {
+    content: ''; position: absolute; bottom: -110px; left: -90px;
+    width: 340px; height: 340px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,74,153,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .lp-grain {
+    position: absolute; inset: 0; opacity: .05; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,.6) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
+  .lp-top { position: relative; z-index: 2; display: flex; align-items: center; gap: 18px; }
+  .lp-logo-card {
+    background: transparent; border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    display: flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px;
+  }
+  .lp-logo-card img {
+    display: block; width: 100%; height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+    clip-path: circle(50%);
+  }
+  /* Fallback letter if image fails */
+  .lp-logo-card img.img-error { display: none; }
+  .lp-logo-fallback {
+    display: none;
+    font-size: 36px; font-weight: 900; color: #fff;
+    letter-spacing: -.04em; line-height: 1;
+  }
+  .lp-logo-card img.img-error ~ .lp-logo-fallback { display: block; }
+
+  .lp-brand {
+    display: flex; flex-direction: column; line-height: 1.05;
+  }
+  .lp-brand-name {
+    font-size: 26px; font-weight: 800; letter-spacing: -.005em;
+    color: #fff;
+  }
+  .lp-brand-tag {
+    margin-top: 6px;
+    font-size: 11px; letter-spacing: .32em; font-weight: 700;
+    color: rgba(255,255,255,.55);
+  }
+
+  .lp-middle { position: relative; z-index: 2; }
+  .lp-eyebrow {
+    font-size: 18px; font-weight: 800; letter-spacing: .10em;
+    color: #80bfff; margin-bottom: 24px;
+  }
+  .lp-headline {
+    font-size: 56px; font-weight: 800; line-height: 1.1; letter-spacing: -.02em;
+    color: #fff;
+  }
+  .lp-headline .accent { color: #80bfff; }
+  .lp-sub {
+    margin-top: 26px; color: rgba(255,255,255,.72);
+    font-size: 17px; line-height: 1.65; max-width: 460px;
+  }
+
+  .lp-bottom {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lp-meta { font-size: 13px; color: rgba(255,255,255,.45); letter-spacing: .04em; }
+  .lp-meta a { color: rgba(255,255,255,.75); text-decoration: none; }
+  .lp-meta a:hover { color: #fff; }
+  .lp-indicator {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: rgba(255,255,255,.55);
+  }
+  .lp-indicator .pulse {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #28c840;
+    box-shadow: 0 0 0 0 rgba(40,200,64,.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(40,200,64,.6); }
+    70%  { box-shadow: 0 0 0 8px rgba(40,200,64,0); }
+    100% { box-shadow: 0 0 0 0 rgba(40,200,64,0); }
+  }
+
+  .lp-right {
+    position: relative; overflow: hidden;
+    background: var(--white);
+    padding: 72px 80px;
+    display: flex; flex-direction: column; justify-content: center;
+    color: var(--text-dark);
+    animation: slideInRight .35s ease-out both;
+  }
+  .lp-right .form-wrap { position: relative; z-index: 1; }
+  .form-wrap { width: 100%; max-width: 480px; margin: 0 auto; }
+  .form-eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .32em;
+    color: var(--red); text-transform: uppercase; margin-bottom: 14px;
+  }
+  .form-title { font-size: 40px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 10px; }
+  .form-subtitle { font-size: 17px; color: var(--text-muted); margin-bottom: 36px; }
+
+  .form-field { margin-bottom: 22px; }
+  .form-label {
+    display: block; font-size: 13px; font-weight: 700;
+    color: var(--text-mid); letter-spacing: .06em;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .form-input {
+    width: 100%; background: #fff; color: var(--text-dark);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 17px 18px; font-size: 16px; font-family: 'Segoe UI', Arial, sans-serif;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .form-input::placeholder { color: var(--text-light); }
+  .form-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(0,74,153,.08);
+  }
+  .form-input.invalid {
+    border-color: #cc0000;
+    animation: shake .24s linear;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-4px); }
+  }
+
+  /* Password wrapper for show/hide toggle */
+  .pw-wrap { position: relative; }
+  .pw-wrap .form-input { padding-right: 52px; }
+  .pw-toggle {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; padding: 4px;
+    color: var(--text-muted); display: flex; align-items: center;
+    transition: color .15s;
+  }
+  .pw-toggle:hover { color: var(--red); }
+  .pw-toggle svg { width: 20px; height: 20px; pointer-events: none; }
+
+  .form-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 10px 0 26px;
+  }
+  .form-check {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; color: var(--text-mid); cursor: pointer;
+  }
+  .form-check input { accent-color: var(--red); width: 17px; height: 17px; cursor: pointer; }
+  .form-row a {
+    font-size: 15px; color: var(--red); text-decoration: none; font-weight: 600;
+  }
+  .form-row a:hover { text-decoration: underline; }
+
+  .form-error {
+    font-size: 14.5px; color: #cc0000; font-weight: 600;
+    background: rgba(204,0,0,0.06); border: 1px solid rgba(204,0,0,0.18);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;
+  }
+
+  .form-btn {
+    width: 100%; background: var(--red); color: #fff;
+    padding: 19px 0; border: none; border-radius: 10px;
+    font-size: 14.5px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0,74,153,.3), inset 0 0 0 1px rgba(255,255,255,.15);
+    transition: transform .12s ease-out, box-shadow .2s, background .2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .form-btn::before {
+    content: ''; position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+    transition: left .6s ease;
+  }
+  .form-btn:hover { background: var(--red-dark); transform: translateY(-1px); }
+  .form-btn:hover::before { left: 100%; }
+  .form-btn:active { transform: translateY(1px); }
+  .form-btn:disabled { opacity: .7; cursor: not-allowed; }
+  .form-btn:disabled::before { left: -100%; transition: none; }
+  .btn-spinner {
+    display: none; width: 16px; height: 16px; margin-left: 10px;
+    border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  .form-btn.loading .btn-label { opacity: .8; }
+  .form-btn.loading .btn-spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .form-footer {
+    margin-top: 30px; font-size: 14px; color: var(--text-muted);
+    text-align: center; line-height: 1.6;
+  }
+  .form-footer strong { color: var(--text-mid); }
+
+  /* Forgot Panel */
+  .forgot-panel {
+    margin-top: 6px;
+    animation: slideDown .3s ease-out both;
+    text-align: center;
+  }
+  .forgot-icon {
+    width: 92px; height: 92px; margin: 0 auto 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, rgba(0,74,153,0.14), rgba(0,74,153,0.04) 65%, transparent 75%);
+    display: flex; align-items: center; justify-content: center;
+    animation: lockPulse 2.4s ease-in-out infinite;
+  }
+  .forgot-icon svg { width: 44px; height: 44px; stroke: var(--red); }
+  .forgot-icon svg .shackle { animation: shackleWiggle 2.4s ease-in-out infinite; transform-origin: 32px 22px; }
+  @keyframes lockPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,74,153,0.25); transform: scale(1); }
+    50%     { box-shadow: 0 0 0 18px rgba(0,74,153,0); transform: scale(1.04); }
+  }
+  @keyframes shackleWiggle {
+    0%,90%,100% { transform: rotate(0); }
+    45%         { transform: rotate(-8deg); }
+    60%         { transform: rotate(6deg); }
+    75%         { transform: rotate(0); }
+  }
+  .forgot-title { font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -.01em; }
+  .forgot-sub { font-size: 16px; color: var(--text-muted); margin-bottom: 26px; line-height: 1.6; }
+  .forgot-card {
+    text-align: left;
+    background: #f4f8ff; border: 1px solid rgba(0,74,153,0.15); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 22px;
+    display: flex; align-items: flex-start; gap: 14px;
+    box-shadow: 0 6px 18px rgba(0,74,153,0.06);
+  }
+  .forgot-card-icon {
+    flex: 0 0 36px; width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(0,74,153,0.1); color: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .forgot-card-body { flex: 1; }
+  .forgot-card-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .18em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;
+  }
+  .forgot-card-value { font-size: 15.5px; font-weight: 600; color: var(--text-dark); word-break: break-all; }
+  .forgot-card-value a { color: var(--red); text-decoration: none; border-bottom: 1px dashed rgba(0,74,153,0.3); }
+  .forgot-card-value a:hover { border-bottom-color: var(--red); }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 899px) {
+    .login-page { grid-template-columns: 1fr; min-height: auto; }
+    .lp-left { padding: 36px 28px; min-height: 280px; }
+    .lp-left::before { width: 280px; height: 280px; top: -80px; right: -80px; }
+    .lp-left::after { width: 200px; height: 200px; bottom: -60px; left: -50px; }
+    .lp-headline { font-size: 28px; }
+    .lp-sub { font-size: 14px; }
+    .lp-bottom { margin-top: 28px; }
+    .lp-right { padding: 36px 24px 48px; }
+    .form-title { font-size: 24px; }
+  }
+  @media (max-width: 480px) {
+    .lp-left { padding: 28px 20px; }
+    .lp-headline { font-size: 24px; }
+    .form-wrap { max-width: 100%; }
+    .lp-bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+
+  .show-forgot #signin-form { display: none; }
+  .show-forgot .form-eyebrow,
+  .show-forgot .form-title,
+  .show-forgot .form-subtitle { display: none; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="auth-config.js"></script>
+<script src="auth.js"></script>
+</head>
+<body>
+
+<noscript>
+  <div style="padding:24px;background:#0a0a0a;color:#fff;text-align:center;font-family:Arial,sans-serif;">
+    This page requires JavaScript. Please enable it to sign in.
+  </div>
+</noscript>
+
+<div class="login-page">
+
+  <aside class="lp-left" aria-hidden="true">
+    <div class="lp-grain"></div>
+    <div class="lp-top">
+      <div class="lp-logo-card">
+        <img
+          src="ehara_logo.jpg"
+          alt="Ehara Engineering Pvt. Ltd."
+          onerror="this.classList.add('img-error')"
+        />
+        <span class="lp-logo-fallback">E</span>
+      </div>
+      <div class="lp-brand">
+        <span class="lp-brand-name">Ehara Engineering</span>
+        <span class="lp-brand-tag">WORKSPACE</span>
+      </div>
+    </div>
+    <div class="lp-middle">
+      <div class="lp-eyebrow">Committed To Quality. Committed To You</div>
+      <h1 class="lp-headline">A private workspace.<br/><span class="accent">Members only.</span></h1>
+      <p class="lp-sub">An internal workspace for the Ehara Engineering team. Access is granted by invitation only.</p>
+    </div>
+    <div class="lp-bottom">
+      <div class="lp-meta">&copy; 2026 Ehara Engineering Pvt. Ltd. &middot; <a href="#">Privacy</a></div>
+      <div class="lp-indicator"><span class="pulse"></span> Secure connection</div>
+    </div>
+  </aside>
+
+  <main class="lp-right">
+    <div class="form-wrap">
+      <div class="form-eyebrow"></div>
+      <h2 class="form-title">Welcome back</h2>
+      <p class="form-subtitle">Enter your credentials to continue.</p>
+
+      <form id="signin-form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="email">Email address</label>
+          <input class="form-input" id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com"/>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="password">Password</label>
+          <div class="pw-wrap">
+            <input class="form-input" id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"/>
+            <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
+              <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-check">
+            <input id="keep" type="checkbox" checked/>
+            <span>Keep me signed in</span>
+          </label>
+          <a href="#" id="forgot-link">Forgot password?</a>
+        </div>
+
+        <div id="error" class="form-error" role="alert" aria-live="polite" hidden></div>
+
+        <button class="form-btn" id="submit-btn" type="submit">
+          <span class="btn-label">Continue to Workspace</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+
+        <p class="form-footer">
+          Need access? Contact <strong>your administrator</strong>.<br/>
+          This is a private system. Unauthorized access is prohibited.
+        </p>
+      </form>
+
+      <div id="forgot-panel" class="forgot-panel" hidden>
+        <div class="forgot-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <path class="shackle" d="M20 30 V22 a12 12 0 0 1 24 0 V30"/>
+            <rect x="14" y="30" width="36" height="26" rx="4"/>
+            <circle cx="32" cy="42" r="2.5" fill="currentColor" stroke="none"/>
+            <path d="M32 44.5 V49"/>
+          </svg>
+        </div>
+        <h3 class="forgot-title">Access is invitation-only</h3>
+        <p class="forgot-sub">For your security, passwords cannot be reset from this page. Please reach out to your administrator to recover access.</p>
+
+        <div class="forgot-card">
+          <div class="forgot-card-icon" aria-hidden="true">&#9993;</div>
+          <div class="forgot-card-body">
+            <div class="forgot-card-label">Contact administrator</div>
+            <div class="forgot-card-value"><a href="mailto:support@unleashed.in?subject=WORKSPACE%20access%20%E2%80%94%20password%20help">support@unleashed.in</a></div>
+          </div>
+        </div>
+
+        <button class="form-btn" id="forgot-back" type="button">
+          <span class="btn-label">Back to sign in</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const form       = document.getElementById('signin-form');
+  const email      = document.getElementById('email');
+  const password   = document.getElementById('password');
+  const keep       = document.getElementById('keep');
+  const errorBox   = document.getElementById('error');
+  const submitBtn  = document.getElementById('submit-btn');
+
+  // Password show/hide toggle
+  const pwToggle   = document.getElementById('pw-toggle');
+  const eyeIcon    = document.getElementById('eye-icon');
+  const eyeOffIcon = document.getElementById('eye-off-icon');
+
+  pwToggle.addEventListener('click', function () {
+    const isHidden = password.type === 'password';
+    password.type = isHidden ? 'text' : 'password';
+    eyeIcon.style.display    = isHidden ? 'none' : '';
+    eyeOffIcon.style.display = isHidden ? ''     : 'none';
+    pwToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+  });
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.hidden = false;
+    email.classList.remove('invalid');
+    password.classList.remove('invalid');
+    void password.offsetWidth;
+    password.classList.add('invalid');
+  }
+
+  function clearError() {
+    errorBox.hidden = true;
+    errorBox.textContent = '';
+    email.classList.remove('invalid');
+    password.classList.remove('invalid');
+  }
+
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.classList.toggle('loading', on);
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError();
+    const emailVal = email.value.trim();
+    const pwVal    = password.value;
+    if (!emailVal || !pwVal) {
+      showError('Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await window.Auth.signIn(emailVal, pwVal, keep.checked);
+      window.location.replace('form.html');
+    } catch (err) {
+      setLoading(false);
+      showError(window.Auth.friendlyError(err));
+    }
+  });
+
+  [email, password].forEach(function (el) {
+    el.addEventListener('input', function () {
+      if (!errorBox.hidden) clearError();
+    });
+  });
+
+  const forgotLink  = document.getElementById('forgot-link');
+  const forgotPanel = document.getElementById('forgot-panel');
+  const forgotBack  = document.getElementById('forgot-back');
+  const formWrap    = document.querySelector('.form-wrap');
+
+  function openForgot() {
+    forgotPanel.hidden = false;
+    formWrap.classList.add('show-forgot');
+  }
+  function closeForgot() {
+    forgotPanel.hidden = true;
+    formWrap.classList.remove('show-forgot');
+  }
+
+  forgotLink.addEventListener('click', function (e) { e.preventDefault(); openForgot(); });
+  forgotBack.addEventListener('click', function () { closeForgot(); });
+})();
+</script>
+
+<script>
+  window.Auth.signOut().then(function() {
+  document.documentElement.style.visibility = 'visible';
+});
+</script>
+
+</body>
+</html>
