@@ -417,25 +417,31 @@
       <div id="forgot-panel" class="forgot-panel" hidden>
         <div class="forgot-icon" aria-hidden="true">
           <svg viewBox="0 0 64 64" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-            <path class="shackle" d="M20 30 V22 a12 12 0 0 1 24 0 V30"/>
-            <rect x="14" y="30" width="36" height="26" rx="4"/>
-            <circle cx="32" cy="42" r="2.5" fill="currentColor" stroke="none"/>
-            <path d="M32 44.5 V49"/>
+            <path d="M10 20 L32 36 L54 20"/>
+            <rect x="8" y="16" width="48" height="34" rx="4"/>
           </svg>
         </div>
-        <h3 class="forgot-title">Access is invitation-only</h3>
-        <p class="forgot-sub">For your security, passwords cannot be reset from this page. Please reach out to your administrator to recover access.</p>
+        <h3 class="forgot-title">Reset your password</h3>
+        <p class="forgot-sub">Enter your email address and we'll send you a link to reset your password.</p>
 
-        <div class="forgot-card">
-          <div class="forgot-card-icon" aria-hidden="true">&#9993;</div>
-          <div class="forgot-card-body">
-            <div class="forgot-card-label">Contact administrator</div>
-            <div class="forgot-card-value"><a href="mailto:support@unleashed.in?subject=WORKSPACE%20access%20%E2%80%94%20password%20help">support@unleashed.in</a></div>
-          </div>
+        <div id="forgot-success" style="display:none; background:rgba(0,180,80,0.10); border:1px solid rgba(0,180,80,0.30); border-radius:10px; padding:14px 16px; margin-bottom:18px; font-size:14px; color:#0a6e35; text-align:center;">
+          ✅ Reset email sent! Check your inbox and spam folder.
         </div>
 
-        <button class="form-btn" id="forgot-back" type="button">
-          <span class="btn-label">Back to sign in</span>
+        <div id="forgot-error" style="display:none; background:rgba(204,0,0,0.06); border:1px solid rgba(204,0,0,0.18); border-radius:10px; padding:12px 14px; margin-bottom:18px; font-size:14px; color:#cc0000;"></div>
+
+        <div class="form-field" id="forgot-email-field">
+          <label class="form-label" for="forgot-email">Email address</label>
+          <input class="form-input" id="forgot-email" type="email" placeholder="you@company.com" autocomplete="email"/>
+        </div>
+
+        <button class="form-btn" id="forgot-send-btn" type="button">
+          <span class="btn-label">Send Reset Email</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+
+        <button class="form-btn" id="forgot-back" type="button" style="margin-top:12px; background:transparent; border:1.5px solid rgba(0,74,153,0.3); color:var(--red); box-shadow:none;">
+          <span class="btn-label">← Back to sign in</span>
         </button>
       </div>
 
@@ -511,15 +517,30 @@
     });
   });
 
-  const forgotLink  = document.getElementById('forgot-link');
-  const forgotPanel = document.getElementById('forgot-panel');
-  const forgotBack  = document.getElementById('forgot-back');
-  const formWrap    = document.querySelector('.form-wrap');
+  const forgotLink    = document.getElementById('forgot-link');
+  const forgotPanel   = document.getElementById('forgot-panel');
+  const forgotBack    = document.getElementById('forgot-back');
+  const forgotSendBtn = document.getElementById('forgot-send-btn');
+  const forgotEmailEl = document.getElementById('forgot-email');
+  const forgotSuccess = document.getElementById('forgot-success');
+  const forgotError   = document.getElementById('forgot-error');
+  const formWrap      = document.querySelector('.form-wrap');
 
   function openForgot() {
+    // Pre-fill with whatever is in the main email field
+    forgotEmailEl.value = email.value.trim();
+    forgotSuccess.style.display = 'none';
+    forgotError.style.display   = 'none';
+    forgotEmailEl.closest('#forgot-email-field').style.display = '';
+    forgotSendBtn.style.display = '';
+    forgotSendBtn.disabled  = false;
+    forgotSendBtn.classList.remove('loading');
+    forgotSendBtn.querySelector('.btn-label').textContent = 'Send Reset Email';
     forgotPanel.hidden = false;
     formWrap.classList.add('show-forgot');
+    setTimeout(function () { forgotEmailEl.focus(); }, 80);
   }
+
   function closeForgot() {
     forgotPanel.hidden = true;
     formWrap.classList.remove('show-forgot');
@@ -527,6 +548,43 @@
 
   forgotLink.addEventListener('click', function (e) { e.preventDefault(); openForgot(); });
   forgotBack.addEventListener('click', function () { closeForgot(); });
+
+  forgotSendBtn.addEventListener('click', async function () {
+    forgotError.style.display = 'none';
+    forgotSuccess.style.display = 'none';
+
+    var resetEmail = forgotEmailEl.value.trim();
+    if (!resetEmail) {
+      forgotEmailEl.classList.add('invalid');
+      forgotError.textContent = 'Please enter your email address.';
+      forgotError.style.display = 'block';
+      return;
+    }
+    forgotEmailEl.classList.remove('invalid');
+
+    forgotSendBtn.disabled = true;
+    forgotSendBtn.classList.add('loading');
+    forgotSendBtn.querySelector('.btn-label').textContent = 'Sending…';
+
+    try {
+      await window.Auth.sendReset(resetEmail);
+      // Show success — hide the input and button
+      forgotSuccess.style.display = 'block';
+      forgotEmailEl.closest('#forgot-email-field').style.display = 'none';
+      forgotSendBtn.style.display = 'none';
+    } catch (err) {
+      forgotError.textContent = window.Auth.friendlyError(err);
+      forgotError.style.display = 'block';
+      forgotSendBtn.disabled = false;
+      forgotSendBtn.classList.remove('loading');
+      forgotSendBtn.querySelector('.btn-label').textContent = 'Send Reset Email';
+    }
+  });
+
+  // Allow Enter key in forgot email field
+  forgotEmailEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); forgotSendBtn.click(); }
+  });
 })();
 </script>
 
