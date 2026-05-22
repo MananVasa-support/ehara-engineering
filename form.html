@@ -335,7 +335,9 @@ body {
 .q-card.error select,
 .q-card.error .ms-trigger,
 .q-card.error .radio-row { border-color: var(--red) !important; box-shadow: 0 0 0 4px rgba(204,34,41,.10); }
-.q-card.error { animation: shakeX .4s ease; }
+/* opacity:1 and transform:none prevent the card from going invisible after shakeX ends
+   (shakeX has no 'forwards' fill, so without these the card reverts to opacity:0) */
+.q-card.error { animation: shakeX .4s ease; opacity: 1; transform: translateY(0); }
 
 /* Radio group */
 .radio-row {
@@ -1106,8 +1108,13 @@ function onSubmit(){
       var c = document.querySelector('.q-card[data-q="'+q+'"]');
       if (c) c.classList.add('error');
     });
+    // Scroll to the first missing field so user can see it highlighted
     var first = document.querySelector('.q-card[data-q="'+errors[0]+'"]');
-    if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (first) {
+      // Small offset so the fixed header doesn't cover the card
+      var top = first.getBoundingClientRect().top + window.pageYOffset - 100;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
     return;
   }
 
