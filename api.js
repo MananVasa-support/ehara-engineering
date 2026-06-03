@@ -12,25 +12,74 @@ var SHEET_GID       = '998291451';
 var SHEET_URL       = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
                       '/edit?gid=' + SHEET_GID + '#gid=' + SHEET_GID;
 
+// In-memory nav button state (populated from sheet on first getFormData / getNavButtons call)
+var NAV_BUTTONS = [];
+
 // ─── PUBLIC ENTRY POINT ───────────────────────────────────────────────────────
 function callApi(action, payload) {
   if (action === 'getSheetData' || action === 'getDashboardData') {
     return readWebsiteReport();
   }
+
+  // getFormData now includes nav buttons fetched in parallel
   if (action === 'getFormData' || action === 'getDropdownData') {
-    return readNamesSheet();
+    return Promise.all([readNamesSheet(), readNavButtonsSheet()])
+      .then(function (results) {
+        var formData   = results[0];
+        NAV_BUTTONS    = results[1];
+        formData.navButtons = NAV_BUTTONS;
+        return formData;
+      });
   }
+
+  // Read nav buttons from sheet
+  if (action === 'getNavButtons') {
+    return readNavButtonsSheet().then(function (buttons) {
+      NAV_BUTTONS = buttons;
+      return buttons;
+    });
+  }
+
+  // Add a nav button — optimistic update + fire-and-forget write to sheet
+  if (action === 'addNavButton') {
+    var newBtn = { name: (payload.name || '').trim(), link: (payload.link || '').trim() };
+    // Avoid exact duplicates
+    var exists = NAV_BUTTONS.some(function (b) {
+      return b.name === newBtn.name && b.link === newBtn.link;
+    });
+    if (!exists) { NAV_BUTTONS.push(newBtn); }
+    fireWrite('addNavButton', payload);
+    return Promise.resolve(NAV_BUTTONS.slice());
+  }
+
+  // Remove a nav button — optimistic update + fire-and-forget write to sheet
+  if (action === 'removeNavButton') {
+    var pName = (payload.name || '').trim();
+    var pLink = (payload.link || '').trim();
+    NAV_BUTTONS = NAV_BUTTONS.filter(function (b) {
+      return !(b.name === pName && b.link === pLink);
+    });
+    fireWrite('removeNavButton', payload);
+    return Promise.resolve(NAV_BUTTONS.slice());
+  }
+
   if (action === 'getNavButtons') {
     return Promise.resolve([]);
   }
 
-  // WRITE — fire-and-forget through AppScript
-  return fetch(APPS_SCRIPT_URL, {
+  // All other WRITE actions — fire-and-forget through AppScript
+  fireWrite(action, payload);
+  return Promise.resolve({ ok: true });
+}
+
+// ─── FIRE-AND-FORGET WRITE ────────────────────────────────────────────────────
+function fireWrite(action, payload) {
+  fetch(APPS_SCRIPT_URL, {
     method:  'POST',
     mode:    'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ action: action, payload: payload || {} })
-  }).then(function () { return { ok: true }; });
+  }).catch(function () { /* silently ignore network errors */ });
 }
 
 // ─── READ "Website Report" ────────────────────────────────────────────────────
@@ -131,6 +180,25 @@ function readNamesSheet() {
         s.src = APPS_SCRIPT_URL + '?api=getFormData&callback=' + cb;
         document.head.appendChild(s);
       });
+    });
+}
+
+// ─── READ "NavButtons" SHEET ──────────────────────────────────────────────────
+function readNavButtonsSheet() {
+  return fetchGvizJsonp(SHEET_ID, 'NavButtons', null)
+    .then(function (table) {
+      var buttons = [];
+      (table.rows || []).forEach(function (row) {
+        if (!row || !row.c) return;
+        var name = row.c[0] && row.c[0].v != null ? String(row.c[0].v).trim() : '';
+        var link = row.c[1] && row.c[1].v != null ? String(row.c[1].v).trim() : '';
+        if (name && link) { buttons.push({ name: name, link: link }); }
+      });
+      return buttons;
+    })
+    .catch(function () {
+      // NavButtons sheet doesn't exist yet or isn't accessible — return empty
+      return [];
     });
 }
 
