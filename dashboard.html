@@ -55,11 +55,21 @@ html,body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f8;color:var(-
 /* ─── NAV ─── */
 .eh-nav-wrap{background:#0a0e1a;border-bottom:1px solid #050811}
 .eh-nav{display:flex;gap:10px;padding:10px 20px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--blue-soft) #0a0e1a}
+.eh-nav::-webkit-scrollbar{height:6px}
+.eh-nav::-webkit-scrollbar-track{background:#0a0e1a}
+.eh-nav::-webkit-scrollbar-thumb{background:var(--blue-soft);border-radius:3px}
 .eh-nav-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.06);
   color:#f0f1f5;border:1px solid rgba(255,255,255,.12);border-radius:999px;text-decoration:none;
   font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .18s}
 .eh-nav-btn:hover{background:rgba(46,91,255,.3);border-color:rgba(255,255,255,.3);transform:translateY(-1px)}
 .eh-nav-btn.primary{background:linear-gradient(120deg,var(--blue-soft),var(--blue-deep));border-color:transparent}
+/* Dynamic nav button wrapper + remove (×) button */
+.eh-nav-dyn-wrap{display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.eh-nav-remove{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
+  background:rgba(229,57,53,.22);border:1px solid rgba(229,57,53,.40);color:#ffaaaa;
+  border-radius:50%;font-size:13px;font-weight:900;line-height:1;cursor:pointer;padding:0;
+  transition:background .15s,color .15s,border-color .15s;flex-shrink:0}
+.eh-nav-remove:hover{background:rgba(229,57,53,.70);border-color:transparent;color:#fff}
 
 /* ─── SHELL ─── */
 .dash-shell{max-width:1400px;margin:0 auto;padding:20px 18px 40px}
@@ -241,9 +251,10 @@ table.modal-table tbody td{padding:9px 12px;font-size:12.5px;color:var(--ink)}
 
 <!-- NAV -->
 <div class="eh-nav-wrap">
-  <div class="eh-nav">
+  <div class="eh-nav" id="ehNav">
     <a class="eh-nav-btn primary" href="form.html">📝 Assign Work</a>
     <a class="eh-nav-btn" id="sheetLink" href="https://docs.google.com/spreadsheets/d/1l2qHDPIzYQ0YPPaH1wBdefZNjHNdLSKv5rq7480MQuY/edit" target="_blank">📋 View Sheet Data</a>
+    <!-- dynamic nav buttons injected here by JS -->
   </div>
 </div>
 
@@ -844,8 +855,46 @@ setInterval(updateClock,1000);
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
 function escAttr(s){return esc(s);}
 
+// ─── NAV BUTTONS ───
+function ehRenderNav(buttons) {
+  var nav = document.getElementById('ehNav');
+  if (!nav) return;
+  Array.prototype.slice.call(nav.querySelectorAll('.eh-nav-dyn-wrap')).forEach(function(el){ el.remove(); });
+  (buttons || []).forEach(function(b){
+    var wrap = document.createElement('span');
+    wrap.className = 'eh-nav-dyn-wrap';
+
+    var a = document.createElement('a');
+    a.className = 'eh-nav-btn dyn';
+    a.target = '_blank';
+    a.href = b.link;
+    a.textContent = b.name;
+
+    var x = document.createElement('button');
+    x.className = 'eh-nav-remove';
+    x.innerHTML = '&times;';
+    x.title = 'Remove "' + b.name + '"';
+    x.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!confirm('Remove "' + b.name + '" from the nav bar?')) return;
+      callApi('removeNavButton', { name: b.name, link: b.link })
+        .then(function(updated){ ehRenderNav(updated); })
+        .catch(function(err){ alert('Could not remove: ' + (err && err.message ? err.message : err)); });
+    });
+
+    wrap.appendChild(a);
+    wrap.appendChild(x);
+    nav.appendChild(wrap);
+  });
+}
+
 // ─── BOOT ───
-window.addEventListener('DOMContentLoaded',loadDashboard);
+window.addEventListener('DOMContentLoaded', function() {
+  loadDashboard();
+  // Load nav buttons from sheet (runs in parallel with dashboard data)
+  callApi('getNavButtons').then(ehRenderNav).catch(function(){});
+});
 </script>
 </body>
 </html>
